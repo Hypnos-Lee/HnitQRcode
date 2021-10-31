@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.hnit.qrcode.Utils.HttpUtil;
 import com.hnit.qrcode.Utils.QRCodeUtil;
@@ -24,27 +25,34 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tip = (TextView) findViewById(R.id.tip);
-        tip.setOnClickListener(new ClickListener());
         about = (TextView) findViewById(R.id.about);
-        about.setOnClickListener(new ClickListener());
+        about.setOnClickListener(new AboutListener());
+        tip = (TextView) findViewById(R.id.tip);
+        tip.setOnClickListener(new FreshListener());
         qrCode = (ImageView) findViewById(R.id.qrcode);
-        qrCode.setOnClickListener(new ClickListener());
+        qrCode.setOnClickListener(new FreshListener());
         imageLayout = (LinearLayout) findViewById(R.id.imageLayout);
-        imageLayout.setOnClickListener(new ClickListener());
+        imageLayout.setOnClickListener(new FreshListener());
         seekBar = (SeekBar) findViewById(R.id.seekbar);
-        seekBar.setMax(800);
-        seekBar.setProgress(800);
+        seekBar.setMax(850);
+        seekBar.setProgress(850);
         seekBar.setOnSeekBarChangeListener(new SeekBarListener());
     }
 
-    private class ClickListener implements View.OnClickListener{
+    private class FreshListener implements View.OnClickListener{
         @Override
         public void onClick(View view){
             httpUtil.postDataWithParame();
             Bitmap mBitmap = QRCodeUtil.createQRCodeBitmap(httpUtil.QRcode, 850, 850);
             ImageView mImageView = (ImageView) findViewById(R.id.qrcode);
             mImageView.setImageBitmap(mBitmap);
+        }
+    }
+    private class AboutListener implements View.OnClickListener{
+        @Override
+        public void onClick(View view){
+            Toast toast=Toast.makeText(getApplicationContext(), "还没有写", Toast.LENGTH_SHORT);
+            toast.show();
         }
 
     }
@@ -58,11 +66,9 @@ public class MainActivity extends AppCompatActivity {
                 qrCode.setLayoutParams(new LinearLayout.LayoutParams(newWidth, newHeight));
             }
         }
-
         @Override
         public void onStartTrackingTouch(SeekBar seekBar) {
         }
-
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
         }
