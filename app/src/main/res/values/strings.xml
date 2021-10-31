@@ -4,4 +4,7 @@
     <string name="tip">点击屏幕刷新二维码</string>
     <string name="QRcodeOfEcard">一卡通二维码</string>
     <string name="about">关于</string>
+    <string name="time">Time</string>
+    <string name="sign">Sign</string>
+    <string name="accnum">AccNum</string>
 </resources>
