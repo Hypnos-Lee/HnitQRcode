@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">湖工一卡通</string>
+    <string name="sendHttp">获取二维码</string>
+    <string name="tip">点击屏幕刷新二维码</string>
+    <string name="QRcodeOfEcard">一卡通二维码</string>
+    <string name="about">关于</string>
+</resources>
