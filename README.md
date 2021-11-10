@@ -3,11 +3,11 @@
 
 ## 自定义用户数据方法
 
-1.打开并登录 [校园一卡通](http://59.51.114.201:8080/easytong_webapp/index.html#/virtualCard)
+1.电脑浏览器打开并登录 [校园一卡通](http://59.51.114.201:8080/easytong_webapp/index.html#/virtualCard)
 
-2.F12打开浏览器的开发者模式，并选择NetWork
+2.F12 打开浏览器的开发者模式，并选择 NetWork
 
-3.点击刷新二维码
+3.点击 “刷新二维码” 按钮
 
 4.找到 getH5QRCode 请求
 
