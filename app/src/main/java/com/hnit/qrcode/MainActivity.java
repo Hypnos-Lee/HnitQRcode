@@ -1,214 +1,217 @@
 package com.hnit.qrcode;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.hnit.qrcode.Utils.FileUtil;
 import com.hnit.qrcode.Utils.HttpUtil;
 import com.hnit.qrcode.Utils.QRCodeUtil;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 public class MainActivity extends AppCompatActivity {
-    private HttpUtil httpUtil = new HttpUtil();
-    private TextView about;
-    private Button tip;
-    private ImageView qrCode;
-    private SeekBar seekBar;
-    private LinearLayout imageLayout;
+    private ImageView qrCodeImageView;
+    private LinearLayout homeLayout;
+    private View progressIndicator;
     private String accNum;
     private String time;
     private String sign;
-    private int width;
-    private int height;
-    private int seekBarLength;
+    private int QRCodeSize;
+    private Handler QRCodeViewHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //初始化用户数据
         initUserData();
-        //先发一次请求之后生成二维码的时候速度更快
-        httpUtil.postDataWithParame(accNum, time, sign);
+
+        //初始化控件
         initView();
+
+        //二维码Handler
+        QRCodeViewHandler = new Handler(msg -> {
+            //生成二维码
+            Bitmap mBitmap = QRCodeUtil.createQRCodeBitmap(msg.obj.toString(), QRCodeSize, QRCodeSize);
+            //显示二维码
+            qrCodeImageView.setImageBitmap(mBitmap);
+            //关闭指示器
+            progressIndicator.setVisibility(View.INVISIBLE);
+            return true;
+        });
+
+        //打开软件自动生成二维码
+        refreshQRCode();
     }
 
     //初始化用户数据
     private void initUserData() {
-        SharedPreferences.Editor editor = getSharedPreferences("userdata", MODE_PRIVATE).edit();
-        accNum = getSharedPreferences("userdata", MODE_PRIVATE).getString("AccNum", null);
-        time = getSharedPreferences("userdata", MODE_PRIVATE).getString("Time", null);
-        sign = getSharedPreferences("userdata", MODE_PRIVATE).getString("Sign", null);
-
-        //初始化调用二维码所需要的参数
+        //获取请求参数
+        accNum = FileUtil.getString(this, "AccNum");
+        time = FileUtil.getString(this, "Time");
+        sign = FileUtil.getString(this, "Sign");
+        //参数为空则初始化
         if (accNum == null) {
-            editor.putString("AccNum", "19581");
             accNum = "19581";
+            FileUtil.saveString(this, "AccNum", "19581");
         }
         if (time == null) {
-            editor.putString("Time", "20211030095909");
             time = "20211030095909";
+            FileUtil.saveString(this, "Time", "20211030095909");
         }
         if (sign == null) {
-            editor.putString("Sign", "aa12396233559f6abcd48e40494d0275");
             sign = "aa12396233559f6abcd48e40494d0275";
+            FileUtil.saveString(this, "Sign", "aa12396233559f6abcd48e40494d0275");
         }
 
-        //初始化拖动条的长度和图片长宽
-        seekBarLength = getSharedPreferences("userdata", MODE_PRIVATE).getInt("seekBarLength", -1);
-        if (seekBarLength == -1) {
-            editor.putInt("seekBarLength", 700);
-            seekBarLength = 700;
+        //获取图片参数
+        QRCodeSize = FileUtil.getInt(this, "QRCodeSize");
+        if (QRCodeSize == -1) {
+            QRCodeSize = 800;
+            FileUtil.saveInt(this, "QRCodeSize", 800);
         }
-        width = seekBarLength + 100;
-        height = seekBarLength + 100;
-        editor.apply();
+    }
+
+    //初始化控件
+    private void initView() {
+        //二维码
+        qrCodeImageView = findViewById(R.id.qrcode);
+        qrCodeImageView.setOnClickListener(new RefreshListener());
+        //布局
+        homeLayout = findViewById(R.id.homeLayout);
+        homeLayout.setOnClickListener(new RefreshListener());
+        //指示器
+        progressIndicator = findViewById(R.id.progressIndicator);
+    }
+
+    //创建菜单
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.home_menu, menu);
+        return true;
+    }
+
+    //设置菜单选择事件
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        //创建布局绑定器
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        //判断点击选项
+        switch (item.getItemId()) {
+            case R.id.setParameter: {
+                //将布局绑定到view
+                 final View parameterDialView = layoutInflater.inflate(R.layout.request_parameter_dialog, null);
+                //显示对话框
+                new MaterialDialog.Builder(this)
+                        .title("修改参数")
+                        .customView(parameterDialView, true)
+                        .positiveText("确定").onPositive((dialog, which) -> {
+                            //处理
+                            Toast.makeText(this, "确认", Toast.LENGTH_SHORT).show();
+                        })
+                        .negativeText("取消")
+                        .show();
+                break;
+            }
+            //点击调整二维码
+            case R.id.changeQRCode: {
+                //将布局绑定到view
+                final View qrCodeDialogView = layoutInflater.inflate(R.layout.qrcode_parameter_dialog, null);
+                //获取对话框中两个输入框
+                EditText sizeEdit = qrCodeDialogView.findViewById(R.id.QRCodeSizeEdit);
+                //显示对话框
+                new MaterialDialog.Builder(this)
+                        .title("调整二维码")
+                        .customView(qrCodeDialogView, true)
+                        .positiveText("确定").onPositive((dialog, which) -> {
+                            //获取大小信息
+                            QRCodeSize = Integer.parseInt(sizeEdit.getText().toString());
+                            //生成新的二维码
+                            refreshQRCode();
+                            //保存数据到本地
+                            FileUtil.saveInt(this, "QRCodeSize", QRCodeSize);
+                        })
+                        .negativeText("取消")
+                        .show();
+                break;
+            }
+            case R.id.about: {
+                new MaterialDialog.Builder(this)
+                        .title("关于")
+                        .content("解决带卡的麻烦\nQQ:1642232305")
+                        .show();
+                break;
+            }
+            default:
+                throw new IllegalStateException("Unexpected value: " + item.getItemId());
+        }
+        return true;
+    }
+
+
+    //刷新二维码
+    private void refreshQRCode() {
+        HttpUtil.getQRCodeData(accNum, time, sign, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+//                Toast.makeText(MainActivity.this, "获取二维码失败", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                Log.d("调试信息", "获取二维码成功");
+                //如果响应体为空则结束
+                if (response.body() == null) {
+                    Log.d("调试信息", "响应体为空");
+                    return;
+                }
+                try {
+                    //String转JSONObject
+                    JSONObject responseBodyJson = new JSONObject(response.body().string());
+                    //获取二维码数据
+                    Message QRCodeData = new Message();
+                    QRCodeData.obj = responseBodyJson.getString("qRCode");
+                    //显示二维码
+                    QRCodeViewHandler.sendMessage(QRCodeData);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     //刷新二维码的统一单击监听器
     private class RefreshListener implements View.OnClickListener {
         @Override
         public void onClick(View view) {
-            httpUtil.postDataWithParame(accNum, time, sign);
-            if(httpUtil.QRcode == null){
-//                Toast.makeText(MainActivity.this, "获取失败，请检查参数是否正确", Toast.LENGTH_SHORT).show();
-            }else{
-                Bitmap mBitmap = QRCodeUtil.createQRCodeBitmap(httpUtil.QRcode, 800, 800);
-                ImageView mImageView = (ImageView) findViewById(R.id.qrcode);
-                mImageView.setImageBitmap(mBitmap);
-            }
+            progressIndicator.setVisibility(View.VISIBLE);
+            refreshQRCode();
         }
-    }
-
-    //”关于“按钮单击监听器
-    private class AboutListener implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            showNormalDialog();
-        }
-    }
-
-    //"关于"按钮长按监听器（触发“填写用户数据”）
-    private class AboutLongClickListener implements View.OnLongClickListener {
-        public boolean onLongClick(View v) {
-            showAddDialog();
-            return true;   //return true即可解决长按事件跟点击事件同时响应的问题
-        }
-    }
-
-    //拖动条监听器
-    private class SeekBarListener implements SeekBar.OnSeekBarChangeListener {
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-            if (seekBar.getId() == R.id.seekbar) {
-                width = i + 100;
-                height = (int) (width);
-                qrCode.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-                SharedPreferences.Editor editor = getSharedPreferences("userdata", MODE_PRIVATE).edit();
-                editor.putInt("seekBarLength", i);
-                editor.apply();
-            }
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-        }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-        }
-
-    }
-
-    //关于软件的说明 弹窗
-    private void showNormalDialog() {
-        /* @setIcon 设置对话框图标
-         * @setTitle 设置对话框标题
-         * @setMessage 设置对话框消息提示
-         * setXXX方法返回Dialog对象，因此可以链式设置属性
-         */
-        final AlertDialog.Builder normalDialog =
-                new AlertDialog.Builder(MainActivity.this);
-        normalDialog.setIcon(R.drawable.hnitlogo1);
-        normalDialog.setTitle("关于软件");
-        normalDialog.setMessage("\n个人开发，解决带卡的麻烦\n\n开发者QQ 1642232305\n");
-        // 显示
-        normalDialog.show();
-    }
-
-    //填写用户数据 弹窗
-    protected void showAddDialog() {
-        LayoutInflater factory = LayoutInflater.from(this);
-        final View textEntryView = factory.inflate(R.layout.dailoglayout, null);
-        final EditText accnumEdit = (EditText) textEntryView.findViewById(R.id.accnumEdit);
-        accnumEdit.setText(accNum);
-        final EditText timeEdit = (EditText) textEntryView.findViewById(R.id.timeEdit);
-        timeEdit.setText(time);
-        final EditText signEdit = (EditText) textEntryView.findViewById(R.id.signEdit);
-        signEdit.setText(sign);
-        AlertDialog.Builder ad1 = new AlertDialog.Builder(MainActivity.this);
-        ad1.setTitle("填写用户数据");
-        ad1.setIcon(R.drawable.hnitlogo1);
-        ad1.setView(textEntryView);
-        ad1.setPositiveButton("保存", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int i) {
-                SharedPreferences.Editor editor = getSharedPreferences("userdata", MODE_PRIVATE).edit();
-                editor.putString("AccNum", accnumEdit.getText().toString());
-                accNum = accnumEdit.getText().toString();
-                editor.putString("Time", timeEdit.getText().toString());
-                time = timeEdit.getText().toString();
-                editor.putString("Sign", signEdit.getText().toString());
-                sign = signEdit.getText().toString();
-                editor.apply();
-            }
-        });
-        ad1.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int i) {
-
-            }
-        });
-        ad1.show();// 显示对话框
-
-    }
-
-    //初始化控件
-    private void initView() {
-        about = (TextView) findViewById(R.id.about);
-        about.setOnClickListener(new AboutListener());
-        about.setOnLongClickListener(new AboutLongClickListener());
-        tip = (Button) findViewById(R.id.tip);
-        tip.setOnClickListener(new RefreshListener());
-        qrCode = (ImageView) findViewById(R.id.qrcode);
-        qrCode.setOnClickListener(new RefreshListener());
-        qrCode.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-        qrCode.post(new Runnable() {
-            @Override
-            public void run() {
-                    Bitmap mBitmap = QRCodeUtil.createQRCodeBitmap(httpUtil.QRcode, 800, 800);
-                    ImageView mImageView = (ImageView) findViewById(R.id.qrcode);
-                    mImageView.setImageBitmap(mBitmap);
-            }
-        });
-        imageLayout = (LinearLayout) findViewById(R.id.imageLayout);
-        imageLayout.setOnClickListener(new RefreshListener());
-        seekBar = (SeekBar) findViewById(R.id.seekbar);
-        seekBar.setMax(850);
-        seekBar.setProgress(seekBarLength);
-        seekBar.setOnSeekBarChangeListener(new SeekBarListener());
     }
 
 }
