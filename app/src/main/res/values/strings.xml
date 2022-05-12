@@ -6,5 +6,8 @@
     <string name="about">关于</string>
     <string name="time">Time</string>
     <string name="sign">Sign</string>
-    <string name="accnum">AccNum</string>
+    <string name="accNum">AccNum</string>
+    <string name="QRCodeSize">二维码大小</string>
+    <string name="distanceToTop">距离顶部</string>
+    <string name="HnitQRCode">湖南工学院一卡通二维码</string>
 </resources>

@@ -1,16 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.湖工一卡通" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_200</item>
-        <item name="colorPrimaryVariant">@color/white</item>
-        <item name="colorOnPrimary">@color/black</item>
-        <!-- Secondary brand color. -->
+    <style name="Theme.湖工一卡通" parent="Theme.MaterialComponents.DayNight">
+        <!-- 主题颜色深色变体 -->
+        <item name="colorPrimaryVariant">#FFBFBBC6</item>
+        <!-- 主题颜色 -->
+        <item name="colorPrimary">#FF3F3B46</item>
+        <!-- 控件主要颜色 -->
+        <item name="colorAccent">#000000</item>
+        <!--文字颜色-->
+        <item name="android:textColorPrimary">@color/white</item>
+        <!-- 窗体背景色 -->
+        <item name="android:windowBackground">@color/black</item>
+
+        <!-- 次级品牌颜色 -->
         <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <!-- 状态栏颜色. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <!-- 导航栏颜色 -->
+        <item name="android:navigationBarColor" tools:targetApi="l">#99AFABB6</item>
     </style>
 </resources>

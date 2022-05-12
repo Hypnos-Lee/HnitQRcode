@@ -4,71 +4,32 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    tools:ignore="MissingConstraints"
     tools:context=".MainActivity">
 
     <LinearLayout
-        android:id="@+id/mainLayout"
+        android:id="@+id/homeLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        tools:layout_editor_absoluteX="-59dp"
-        tools:layout_editor_absoluteY="85dp">
+        android:gravity="center_horizontal"
+        android:clickable="true"
+        android:focusable="true">
 
-
-        <LinearLayout
-            android:id="@+id/imageLayout"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="12"
-            android:paddingTop="30dp"
-            android:gravity="center"
-            android:clickable="true"
-            android:focusable="true"
-            >
-
-            <ImageView
-                android:id="@+id/qrcode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/hnitlogo1"
-                tools:ignore="ContentDescription" />
-        </LinearLayout>
-
-        <SeekBar
-            android:id="@+id/seekbar"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_margin="20dp"/>
-
-
-        <Button
-            android:id="@+id/tip"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="10"
-            android:gravity="center_horizontal"
-            android:padding="50dp"
-            android:text="@string/tip"
-            android:textColor="@android:color/darker_gray"
-            android:background="@android:color/transparent"
-            android:textSize="25sp" />
-
-        <TextView
-            android:id="@+id/about"
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressIndicator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/about"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="15sp" />
+            android:indeterminate="true" />
+
+        <ImageView
+            android:id="@+id/qrcode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/round_change_circle_orange_800_48dp"
+            android:layout_marginTop="50dp"
+            android:contentDescription="@string/HnitQRCode" />
 
     </LinearLayout>
 
-
 </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!--让布局可以被点击-->
-    <!--    android:clickable="true"-->
-    <!--    android:focusable="true"-->
